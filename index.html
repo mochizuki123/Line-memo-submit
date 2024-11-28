@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firebase_version9_RealtimeDB(G'sACADEMY初学者用サンプル)</title>
+    <link rel="stylesheet" href="css1/reset.css">
+    <link rel="stylesheet" href="./css1/style.css">
+</head>
+
+<body>
+    <div class="bucket-img">
+        <img src="./img/backet list image.png"  width="700" height="400" alt="">
+    </div>
+    <h1>Bucket list</h1>
+    <h1 class="text1"> 📝叶えたい夢</h1>
+    <main>
+        <div class="type-area"> 
+                <select class="type-option" id="type">
+                    <option value="palceholder">種別</option>
+                    <option>仕事</option>
+                    <option>家事</option>
+                    <option>遊び</option>
+                    <option>その他</option>
+                </select>
+        </div>
+        
+        <!-- 登録日はカレンダーへ変更 -->
+        <div class="input-area">
+            <input id="date" type="text" placeholder="登録日を入力">
+            <textarea id="task" placeholder="実現したいことを入力"></textarea>
+            <textarea id="memo" placeholder="メモを入力"></textarea>
+        </div>
+
+        
+            <!-- <dd><select id="priority">
+                    <option value="palceholder">優先度</option>
+                    <option></option>
+                    <option>高</option>
+                    <option>中</option>
+                    <option>低</option>
+                </select> -->
+        
+        
+        <div class="button-area">
+            <button id="save">登録</button>
+            <button id="clear">削除</button>
+        </div>
+
+        <div id="output"></div>
+        
+          <!-- ランダムに応援メッセージ/ 右揃え/   --> 
+    
+        
+    </main>
+    
+    
+    <footer>
+        Gs
+    </footer>
+   
+    <!-- コンテンツ表示画面 -->
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.1.0/firebase-app.js";
+        import { getDatabase, ref, push, set, onChildAdded, remove, onChildRemoved, orderByChild, equalTo, get, query }
+            from "https://www.gstatic.com/firebasejs/9.1.0/firebase-database.js";
+        
+            // Your web app's Firebase configuration  ★提出時にAPIキーは削除★
+        const firebaseConfig = {
+                apiKey: "AIzaSyBrbh3eUWvE7ILBF5FDHnHVCwZG2Y8Z8Do",
+                authDomain: "gsdev0603-9130c.firebaseapp.com",
+                projectId: "gsdev0603-9130c",
+                storageBucket: "gsdev0603-9130c.firebasestorage.app",
+                messagingSenderId: "1001183675744",
+                appId: "1:1001183675744:web:76225f3262138d14790a05"
+            };
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app); //RealtimeDBに接続
+        const dbRef = ref(db, "chat"); //RealtimeDB内の"chat"を使う
+            
+        //11/21 キー(type)クエリ
+        /*const typeQuery = query(dbRef, orderByChild('type'), equalTo('mochi'));
+
+            get(typeQuery)
+                .then((snapshot) => {
+                    if (snapshot.exists()) {
+                        console.log(snapshot.val()); // 検索結果を取得
+                    } else {
+                        console.log('No matching data found');
+                    }
+                 }); */
+            
+        /*$(document).on("click", ".delete", function () {
+            const key = $(this).data("key"); // 削除対象のユニークKEYを取得
+            const itemRef = ref(db, `chat/${key}`); // 削除対象のデータの参照を取得
+            remove(itemRef) // データを削除
+            .then(() => {
+                alert("データを削除しました");
+            })
+        })*/
+
+        //データ削除
+        /*
+
+        const database = firebase.database();
+        const room = "chat_room";
+        database.ref(room).child("※1キー").remove();
+        */    
+        
+        //データ登録(Click)
+        $("#save").on("click", function () {
+            const msg = {
+                type: $("#type").val(),
+                date: $("#date").val(),
+                task: $("#task").val(),
+                memo: $("#memo").val(),
+            }
+            const newPostRef = push(dbRef); //ユニークKEYを生成
+            set(newPostRef, msg);           //"chat"にユニークKEYをつけてオブジェクトデータを登録
+            console.log(dbRef);
+            
+        });
+
+        
+        //データ登録(Enter)
+        $("#text").on("keydown", function (e) {
+            console.log(e);        //e変数の中身を確認！！
+            if (e.keyCode == 13) {   //EnterKey=13
+                const msg = {
+                    type: $("#type").val(),
+                    text: $("#text").val()
+                }
+                const newPostRef = push(dbRef); //ユニークKEYを生成
+                set(newPostRef, msg);           //"chat"にユニークKEYをつけてオブジェクトデータを登録
+            }
+        });
+
+
+        //最初にデータ取得＆onSnapshotでリアルタイムにデータを取得
+        onChildAdded(dbRef, function (data) {
+            const msg = data.val();    //オブジェクトデータを取得し、変数msgに代入
+            const key = data.key;      //データのユニークキー（削除や更新に使用可能）
+            
+           console.log(msg,"データ取得を確認");            
+            //表示用テキスト・HTMLを作成
+            let h = '<p class="output-css">';
+            h += "〇日付📅 :" + msg.date;
+            h += '<br>';
+            h += "〇種別: " + msg.type;
+            h += '<br>';
+            h += "〇実現したいこと: " + msg.task;
+            h += '<br>';
+            h += "〇メモ📝: " + msg.memo;
+            h += '<br>';
+            
+            $("#output").append(h); //#outputの最ype;
+
+        console.log(key, "keyを確認");
+        });
+
+        /*11/21 データ削除
+            $("#clear").on("click", function () {
+                dbRef.child(key).remove()
+            })  
+        */
+
+        $("#clear").on("click", function () {
+                remove(dbRef).then(() => {
+                    $("#output").empty();
+                    console.log("全てのメッセージを削除しました。");
+            })
+        })
+        
+        console.log(dbRef);
+        
+//private handleDelete = (key: string) => remove(ref(db, 'chat/' + key));        
+        // データ更新
+        //db.collection(msg).doc(OCDoMX20wuQXCeYC - XK).update({
+          //  type: "bb"
+        //})
+    
+    </script>
+</body>
+
+</html>
